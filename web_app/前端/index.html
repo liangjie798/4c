@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全球能源危机抗风险评估平台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <!-- 引入 Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body class="min-h-screen text-slate-200">
+  <div class="max-w-7xl mx-auto p-8 relative">
+    <div id="loader" class="absolute inset-0 z-50 flex items-center justify-center hidden rounded-xl">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2"></div>
+    </div>
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-bold tech-font text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">🌍 全球能源危机抗风险评估平台</h1>
+        <p class="text-slate-400 mt-2 font-medium">世界地图大屏：点击国家查看画像</p>
+      </div>
+      <div class="text-sm text-cyan-500 border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 rounded-full shadow-[0_0_10px_rgba(0,229,255,0.2)]">前端: 8080｜后端: 8000</div>
+    </div>
+
+    <div class="card mb-8" id="app">
+      <div class="flex flex-col lg:flex-row gap-6">
+        <div class="lg:w-3/4 w-full">
+          <div class="flex justify-between items-center mb-3">
+            <div class="text-lg font-semibold tech-font text-cyan-400">世界地图（税收百分比：均值）</div>
+            <div class="flex gap-2">
+              <button @click="set3DMode(true)" :class="is3D ? 'px-3 py-1 text-sm rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-500/40 transition-colors' : 'px-3 py-1 text-sm rounded bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 transition-colors'">3D 地球</button>
+              <button @click="set3DMode(false)" :class="!is3D ? 'px-3 py-1 text-sm rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-500/40 transition-colors' : 'px-3 py-1 text-sm rounded bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 transition-colors'">2D 平面</button>
+            </div>
+          </div>
+          <div class="relative flex justify-center items-center overflow-hidden" style="height: 75vh; width: 100%;">
+            <div id="worldMap" class="absolute inset-0"></div>
+          </div>
+        </div>
+        <div class="lg:w-1/4 w-full">
+          <div class="text-lg font-semibold mb-3 tech-font text-cyan-400">国家画像</div>
+          <div class="mb-4">
+            <div class="text-sm text-slate-400 mb-2">选择国家/地区（支持搜索）</div>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span class="text-cyan-500">🔎</span>
+              </div>
+              <input v-model="searchQuery" @input="onSearch" list="countryList" placeholder="输入国家/地区名称…" class="input" style="padding-left: 2.5rem;" />
+              <datalist id="countryList">
+                <option v-for="c in availableCountries" :key="c" :value="c"></option>
+              </datalist>
+            </div>
+          </div>
+
+          <div class="space-y-3 text-sm bg-slate-800/50 p-4 rounded-lg border border-slate-700/50">
+            <div class="flex justify-between border-b border-slate-700/50 pb-2"><span class="text-slate-400">国家/地区</span><span class="font-semibold text-cyan-300">{{ selectedProfile.country || '—' }}</span></div>
+            <div class="flex justify-between border-b border-slate-700/50 pb-2"><span class="text-slate-400">地区</span><span class="text-slate-200">{{ selectedProfile.region || '—' }}</span></div>
+            <div class="flex justify-between border-b border-slate-700/50 pb-2"><span class="text-slate-400">收入水平</span><span class="text-slate-200">{{ selectedProfile.income_level || '—' }}</span></div>
+            <div class="flex justify-between border-b border-slate-700/50 pb-2"><span class="text-slate-400">补贴水平</span><span class="text-slate-200">{{ selectedProfile.subsidy_level || '—' }}</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">税收百分比</span><span class="text-neon-purple font-semibold">{{ selectedProfile.tax_percentage != null ? selectedProfile.tax_percentage.toFixed(2) + '%' : '—' }}</span></div>
+          </div>
+
+          <div class="mt-4 text-xs text-slate-500 italic">
+            * 提示：部分国家/地区若未能匹配世界地图名称，仍可用右侧搜索查看画像。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-lg font-semibold mb-3 tech-font text-cyan-400 flex items-center gap-2">
+      <span class="w-2 h-6 bg-cyan-500 rounded-sm shadow-[0_0_8px_#00E5FF]"></span>
+      进入分析模块
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <a href="./html/eda.html" class="card block hover:-translate-y-1 transition-transform group cursor-pointer relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div class="text-xl font-semibold mb-2 tech-font text-slate-100 group-hover:text-cyan-400 transition-colors">📊 数据工程与 EDA</div>
+        <div class="text-sm text-slate-400">双轴走势 + Pearson 热力图（支持自选国家/地区与搜索）</div>
+      </a>
+      <a href="./html/beta.html" class="card block hover:-translate-y-1 transition-transform group cursor-pointer relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div class="text-xl font-semibold mb-2 tech-font text-slate-100 group-hover:text-cyan-400 transition-colors">📈 传导率 Beta 榜单</div>
+        <div class="text-sm text-slate-400">84 个国家/地区横向榜单全量展示</div>
+      </a>
+      <a href="./html/irf.html" class="card block hover:-translate-y-1 transition-transform group cursor-pointer relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div class="text-xl font-semibold mb-2 tech-font text-slate-100 group-hover:text-cyan-400 transition-colors">⚡ 动态抗击打 IRF</div>
+        <div class="text-sm text-slate-400">VAR-IRF 脉冲响应（固定数据源）</div>
+      </a>
+      <a href="./html/topsis.html" class="card block hover:-translate-y-1 transition-transform group cursor-pointer relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div class="text-xl font-semibold mb-2 tech-font text-slate-100 group-hover:text-cyan-400 transition-colors">🏆 极限压力 TOPSIS</div>
+        <div class="text-sm text-slate-400">84 个国家/地区综合排行 + 四项指标权重占比</div>
+      </a>
+    </div>
+
+    <!-- 2020-2026 全球油价关键事件时间轴 -->
+    <div class="text-lg font-semibold mb-3 tech-font text-cyan-400 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-6 bg-neon-purple rounded-sm shadow-[0_0_8px_#D500F9]"></span>
+        全球石油价格关键事件回顾
+      </div>
+      <div class="text-sm font-normal text-slate-400 bg-slate-800/50 border border-slate-700/50 px-3 py-1 rounded-full font-mono">
+        📅 数据区间：2020年1月 — 2026年4月6日
+      </div>
+    </div>
+    <div class="card relative overflow-hidden mb-8">
+      <div class="absolute top-0 left-8 bottom-0 w-px bg-slate-700"></div>
+      <div class="space-y-8 relative">
+        
+        <!-- 2020 -->
+        <div class="flex gap-4 items-start group">
+          <div class="w-4 h-4 rounded-full bg-slate-800 border-2 border-cyan-500 z-10 mt-1.5 group-hover:bg-cyan-500 transition-colors shadow-[0_0_8px_rgba(0,229,255,0.5)]"></div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="text-sm font-bold text-cyan-500 font-mono">2020年</div>
+              <span class="text-[10px] bg-slate-700/50 text-slate-300 border border-slate-600 px-1.5 py-0.5 rounded flex items-center gap-1">🦢 黑天鹅事件</span>
+            </div>
+            <h4 class="text-lg font-semibold text-slate-200 mb-3">需求崩塌与“负油价”史诗级动荡</h4>
+            <ul class="space-y-2 text-sm text-slate-400">
+              <li class="flex items-start gap-2"><span class="text-cyan-500 mt-0.5">•</span><span><b>1月-3月（全球疫情爆发）：</b>新冠疫情导致全球大面积封城与停工，交通和工业原油需求断崖式下跌。</span></li>
+              <li class="flex items-start gap-2"><span class="text-cyan-500 mt-0.5">•</span><span><b>3月（价格战爆发）：</b>俄罗斯最初拒绝OPEC+的深化减产提议，沙特随后发动全面价格战，大幅下调出口油价并将日产量提升至逾1200万桶的历史高位，导致油价单日暴跌超30%。</span></li>
+              <li class="flex items-start gap-2"><span class="text-cyan-500 mt-0.5">•</span><span><b>4月20日（历史首现负油价）：</b>由于全球原油储能接近极限，美国库欣地区的交割仓库爆满。面临庞大实物交割成本的投机者不计代价抛售，导致 NYMEX 5月交货的WTI原油期货暴跌至 -37.63美元/桶。</span></li>
+              <li class="flex items-start gap-2"><span class="text-cyan-500 mt-0.5">•</span><span><b>4月中下旬（史诗级减产）：</b>OPEC+最终达成每日减产近1000万桶的历史性协议，逐步稳定市场基本面。</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 2021 -->
+        <div class="flex gap-4 items-start group">
+          <div class="w-4 h-4 rounded-full bg-slate-800 border-2 border-yellow-500 z-10 mt-1.5 group-hover:bg-yellow-500 transition-colors shadow-[0_0_8px_rgba(234,179,8,0.5)]"></div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="text-sm font-bold text-yellow-500 font-mono">2021年</div>
+              <span class="text-[10px] bg-slate-700/50 text-slate-300 border border-slate-600 px-1.5 py-0.5 rounded flex items-center gap-1">🦢 黑天鹅事件</span>
+            </div>
+            <h4 class="text-lg font-semibold text-slate-200 mb-3">后疫情复苏与供应链错配</h4>
+            <ul class="space-y-2 text-sm text-slate-400">
+              <li class="flex items-start gap-2"><span class="text-yellow-500 mt-0.5">•</span><span><b>全年（需求复苏快于供给）：</b>随着疫苗普及和全球经济强劲重启，原油需求快速攀升。但产油国增产步伐相对克制，导致全球原油库存持续消耗，布伦特原油稳步回升。</span></li>
+              <li class="flex items-start gap-2"><span class="text-yellow-500 mt-0.5">•</span><span><b>3月23日（苏伊士运河堵塞）：</b>巨型货轮“长赐号”搁浅导致全球最重要的能源运输通道之一双向封锁长达近一周，短暂引发市场对中东原油运输延误的恐慌。</span></li>
+              <li class="flex items-start gap-2"><span class="text-yellow-500 mt-0.5">•</span><span><b>四季度（欧洲能源危机蔓延）：</b>欧洲天然气和煤炭价格飙升，促使部分发电厂和工业企业转向使用石油（“气改油”），额外推高了原油需求。</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 2022 -->
+        <div class="flex gap-4 items-start group">
+          <div class="w-4 h-4 rounded-full bg-slate-800 border-2 border-red-500 z-10 mt-1.5 group-hover:bg-red-500 transition-colors shadow-[0_0_8px_rgba(239,68,68,0.5)]"></div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="text-sm font-bold text-red-500 font-mono">2022年</div>
+              <span class="text-[10px] bg-red-900/30 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded flex items-center gap-1">⚔️ 地缘政治危机</span>
+            </div>
+            <h4 class="text-lg font-semibold text-slate-200 mb-3">俄乌冲突与全球能源版图重塑</h4>
+            <ul class="space-y-2 text-sm text-slate-400">
+              <li class="flex items-start gap-2"><span class="text-red-500 mt-0.5">•</span><span><b>2月24日（俄乌冲突全面爆发）：</b>市场恐慌俄罗斯这一全球关键原油出口国的供应中断，布伦特原油在3月上旬一度飙升突破 130美元/桶，创下2008年以来新高。</span></li>
+              <li class="flex items-start gap-2"><span class="text-red-500 mt-0.5">•</span><span><b>3月-10月（SPR空前释放）：</b>为平抑飙升的国内油价，美国拜登政府宣布实施史上最大规模的战略石油储备（SPR）释放计划（连续6个月每天释放100万桶，总计1.8亿桶）。</span></li>
+              <li class="flex items-start gap-2"><span class="text-red-500 mt-0.5">•</span><span><b>12月5日（西方实施“限价令”）：</b>G7集团、欧盟和澳大利亚对俄罗斯海运原油正式实施 60美元/桶 的价格上限，重塑了全球石油贸易流向，俄罗斯原油大幅转向亚洲市场。</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 2023 -->
+        <div class="flex gap-4 items-start group">
+          <div class="w-4 h-4 rounded-full bg-slate-800 border-2 border-orange-500 z-10 mt-1.5 group-hover:bg-orange-500 transition-colors shadow-[0_0_8px_rgba(249,115,22,0.5)]"></div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="text-sm font-bold text-orange-500 font-mono">2023年</div>
+              <span class="text-[10px] bg-orange-900/30 text-orange-400 border border-orange-500/30 px-1.5 py-0.5 rounded flex items-center gap-1">📊 宏观紧缩</span>
+            </div>
+            <h4 class="text-lg font-semibold text-slate-200 mb-3">宏观紧缩与中东摩擦再起</h4>
+            <ul class="space-y-2 text-sm text-slate-400">
+              <li class="flex items-start gap-2"><span class="text-orange-500 mt-0.5">•</span><span><b>上半年（全球加息潮压制需求）：</b>为遏制高通胀，美联储及全球主要央行持续激进加息，市场对全球经济陷入衰退的担忧加剧，压制了原油表现。</span></li>
+              <li class="flex items-start gap-2"><span class="text-orange-500 mt-0.5">•</span><span><b>下半年（OPEC+深化自愿减产）：</b>沙特宣布每日额外自愿减产100万桶，俄罗斯亦减少出口，试图为油价提供坚实底线。</span></li>
+              <li class="flex items-start gap-2"><span class="text-orange-500 mt-0.5">•</span><span><b>10月（巴以冲突爆发）：</b>哈马斯袭击以色列，地缘政治风险溢价重新回到原油市场。</span></li>
+              <li class="flex items-start gap-2"><span class="text-orange-500 mt-0.5">•</span><span><b>11月起（红海危机爆发）：</b>也门胡塞武装开始频繁袭击途经红海的商船，迫使全球主要能源航运公司绕道非洲好望角，大幅拉长了运输周期并推高运费。</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 2024 -->
+        <div class="flex gap-4 items-start group">
+          <div class="w-4 h-4 rounded-full bg-slate-800 border-2 border-green-500 z-10 mt-1.5 group-hover:bg-green-500 transition-colors shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="text-sm font-bold text-green-500 font-mono">2024年</div>
+              <span class="text-[10px] bg-green-900/30 text-green-400 border border-green-500/30 px-1.5 py-0.5 rounded flex items-center gap-1">⚖️ 脆弱平衡</span>
+            </div>
+            <h4 class="text-lg font-semibold text-slate-200 mb-3">脆弱平衡下的拉锯战</h4>
+            <ul class="space-y-2 text-sm text-slate-400">
+              <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">•</span><span><b>全年（美洲增产对冲OPEC+减产）：</b>美国、圭亚那和巴西等非OPEC国家的原油产量创下历史新高。充裕的非OPEC产能抵消了中东地缘紧张带来的溢价，布伦特原油全年均价维持在 80美元/桶 上下。</span></li>
+              <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">•</span><span><b>4月（伊以直接冲突）：</b>伊朗与以色列发生史无前例的无人机与导弹互射，市场一度担忧局势失控，但由于未对霍尔木兹海峡及核心产油设施造成实质破坏，油价冲高回落。</span></li>
+              <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">•</span><span><b>下半年（需求降温）：</b>随着全球主要大国的工业活动疲软及新能源转型加速，原油需求端预期整体走弱。</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 2025 -->
+        <div class="flex gap-4 items-start group">
+          <div class="w-4 h-4 rounded-full bg-slate-800 border-2 border-blue-500 z-10 mt-1.5 group-hover:bg-blue-500 transition-colors shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="text-sm font-bold text-blue-500 font-mono">2025年</div>
+              <span class="text-[10px] bg-blue-900/30 text-blue-400 border border-blue-500/30 px-1.5 py-0.5 rounded flex items-center gap-1">📉 震荡下行</span>
+            </div>
+            <h4 class="text-lg font-semibold text-slate-200 mb-3">供过于求与宏观博弈</h4>
+            <ul class="space-y-2 text-sm text-slate-400">
+              <li class="flex items-start gap-2"><span class="text-blue-500 mt-0.5">•</span><span><b>1月（新一轮制裁冲击）：</b>美国在权力交接前夕启动对俄罗斯的新一轮制裁，引发短期断供恐慌，促使1月油价创下年内最高点。</span></li>
+              <li class="flex items-start gap-2"><span class="text-blue-500 mt-0.5">•</span><span><b>全年（震荡下行）：</b>随着特朗普政府重返白宫并推动放松化石燃料开采监管的能源政策预期发酵，叠加全球（除欧洲外）原油需求增长停滞，市场对供过于求加剧的担忧加剧。全年布伦特及迪拜原油平均现货价格回落至 69美元/桶 附近。</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 2026 -->
+        <div class="flex gap-4 items-start group">
+          <div class="w-4 h-4 rounded-full bg-slate-800 border-2 border-purple-500 z-10 mt-1.5 group-hover:bg-purple-500 transition-colors shadow-[0_0_8px_rgba(168,85,247,0.5)]"></div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="text-sm font-bold text-purple-500 font-mono">2026年 1月 - 4月6日</div>
+              <span class="text-[10px] bg-purple-900/30 text-purple-400 border border-purple-500/30 px-1.5 py-0.5 rounded flex items-center gap-1">⚔️ 历史级断供危机</span>
+            </div>
+            <h4 class="text-lg font-semibold text-slate-200 mb-3">中东全面震荡与历史级断供</h4>
+            <ul class="space-y-2 text-sm text-slate-400">
+              <li class="flex items-start gap-2"><span class="text-purple-500 mt-0.5">•</span><span><b>2月28日（中东军事冲突爆发）：</b>美国与以色列宣布对伊朗发动联合军事打击，原油市场恐慌情绪骤升。</span></li>
+              <li class="flex items-start gap-2"><span class="text-purple-500 mt-0.5">•</span><span><b>3月2日（核心设施遇袭与航道受阻）：</b>沙特最大的拉斯塔努拉（Ras Tanura）炼油厂遇袭；霍尔木兹海峡原油运输流量大幅减少。同日，泰国启动能源紧急监测中心并全面禁止石油出口。原油期货价格迅速突破 80美元/桶。</span></li>
+              <li class="flex items-start gap-2"><span class="text-purple-500 mt-0.5">•</span><span><b>3月5日-6日（全球能源供应链告急）：</b>卡塔尔LNG出口设施停产；中国指示主要炼油厂暂停成品油出口以保内供；科威特因航道受阻大幅削减炼油厂开工率；美国特批印度临时购买1500万桶受制裁滞留的俄油。布伦特原油突破90美元/桶。</span></li>
+              <li class="flex items-start gap-2"><span class="text-purple-500 mt-0.5">•</span><span><b>3月8日-16日（油价破百）：</b>在预估中东地区关停产能高达750万桶/日的极端断供情境下，油价迅速冲破 100美元/桶 大关。</span></li>
+              <li class="flex items-start gap-2"><span class="text-purple-500 mt-0.5">•</span><span><b>3月11日（IEA联合救市）：</b>国际能源署（IEA）紧急宣布从紧急储备中拿出高达4亿桶原油投放市场，试图阻断油价的恶性飙升。</span></li>
+              <li class="flex items-start gap-2"><span class="text-purple-500 mt-0.5">•</span><span><b>3月18日（琼斯法案豁免）：</b>美国宣布对《琼斯法案》实施60天临时豁免，以最大程度释放国内及同盟的海上能源运输能力。</span></li>
+              <li class="flex items-start gap-2"><span class="text-purple-500 mt-0.5">•</span><span><b>4月初至4月6日（持续高位运行）：</b>中东原油供应中断量在4月份逼近峰值（预计超900万桶/日），全球石油系统处于高压力的贸易流向重组期，布伦特原油在4月上旬继续维持在极端高位运行。</span></li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+  <script src="./js/common.js"></script>
+  <script src="./js/index.js"></script>
+</body>
+</html>

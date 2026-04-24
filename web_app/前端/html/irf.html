@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ 动态抗击打 IRF</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="min-h-screen text-slate-200">
+  <div class="flex min-h-screen">
+    <aside class="w-64 flex flex-col h-full flex-shrink-0 z-10 border-r border-cyan-500/20 bg-slate-900/60 backdrop-blur-md">
+      <div class="p-6 border-b border-cyan-500/20">
+        <a href="../index.html" class="text-xl font-bold tech-font flex items-center gap-2 text-cyan-400 drop-shadow-[0_0_8px_rgba(0,229,255,0.8)]">
+          <span>🌍</span> 能源危机评估
+        </a>
+      </div>
+      <nav class="flex-1 p-4 overflow-y-auto">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 tech-font">分析模块</p>
+        <a class="nav-link" data-nav="eda" href="/html/eda.html">📊 数据工程与 EDA</a>
+        <a class="nav-link" data-nav="beta" href="/html/beta.html">📈 传导率 Beta 榜单</a>
+        <a class="nav-link" data-nav="irf" href="/html/irf.html">⚡ 动态抗击打 IRF</a>
+        <a class="nav-link" data-nav="topsis" href="/html/topsis.html">🏆 极限压力 TOPSIS</a>
+      </nav>
+      <div class="p-4 border-t border-cyan-500/20 text-xs text-slate-500 text-center tech-font">
+        基于 FastAPI + HTML/JS
+      </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8 relative">
+      <div id="loader" class="absolute inset-0 z-50 flex items-center justify-center hidden rounded-xl">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2"></div>
+      </div>
+
+      <h2 class="text-2xl font-bold mb-2 tech-font text-cyan-400">⚡ 动态抗击打能力评估 (VAR-IRF)</h2>
+      <p class="text-slate-400 mb-6">VAR-IRF 脉冲响应函数：国际油价冲击对中国国内油价的动态影响（固定数据源）。</p>
+
+      <div class="flex flex-col gap-6">
+        <!-- 上方：中国地图高亮展示 -->
+        <div class="card w-full flex flex-col md:flex-row gap-6">
+          <div class="md:w-1/2 flex flex-col justify-center">
+            <h3 class="text-xl font-semibold tech-font text-cyan-400 mb-4">目标受测区域</h3>
+            <p class="text-slate-400 mb-6 leading-relaxed">
+              本模块使用 <b>VAR (向量自回归模型)</b> 对中国的能源市场抗击打能力进行深度分析。
+              通过模拟国际布伦特原油价格的突然冲击，观察其在未来数周内对中国国内汽油价格的传导效应与动态响应。
+            </p>
+            <div class="space-y-3 text-sm bg-slate-800/50 p-5 rounded-lg border border-slate-700/50">
+              <div class="flex justify-between border-b border-slate-700/50 pb-2"><span class="text-slate-400">受测国家</span><span class="font-bold text-cyan-300 text-base">中国大陆 (Mainland China)</span></div>
+              <div class="flex justify-between border-b border-slate-700/50 pb-2"><span class="text-slate-400">模型方法</span><span class="text-slate-200">VAR (向量自回归) + IRF</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">评估维度</span><span class="text-neon-purple font-semibold">价格传导与抗风险韧性</span></div>
+            </div>
+          </div>
+          <div class="md:w-1/2 bg-slate-900/50 rounded-lg border border-cyan-500/20 relative overflow-hidden flex items-center justify-center min-h-[350px]">
+            <div id="chinaMap" class="absolute inset-0 w-full h-full"></div>
+          </div>
+        </div>
+
+        <!-- 下方：脉冲响应折线图 -->
+        <div class="card w-full mb-8">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold tech-font text-slate-200">脉冲响应曲线（含 95% 置信区间）</h3>
+            <button onclick="loadIrfData()" class="btn btn-secondary">刷新数据</button>
+          </div>
+          <div id="irfChart" style="height: 520px; width: 100%;"></div>
+          
+          <!-- 新增详细分析板块 -->
+          <div class="mt-6 border-t border-slate-700/50 pt-4">
+            <h4 class="text-md font-bold text-cyan-400 mb-3 flex items-center gap-2">
+              <span class="text-lg">📊</span> 脉冲响应结果深度解析
+            </h4>
+            <ul class="space-y-3 text-sm text-slate-300 leading-relaxed list-disc list-inside pl-2">
+              <li>
+                <b>冲击的初始阶段 (第 0 - 2 周)：</b> 
+                在给出一个标准差的国际布伦特原油正向价格冲击后，中国国内汽油价格并没有在第一周立刻产生剧烈波动。这反映了中国成品油定价机制中 <b>“每 10 个工作日调整一次”</b> 的时间滞后性缓冲。国内油价的响应呈现出明显的阶梯式滞后特征，有效隔离了国际市场的短期瞬时情绪恐慌。
+              </li>
+              <li>
+                <b>传导峰值阶段 (第 3 - 6 周)：</b>
+                随着计价周期的到来，冲击的传导效应开始显现，并在第 4 周左右达到响应峰值。但值得注意的是，<b>响应峰值的绝对幅度被显著收窄</b>（相较于国际原油的冲击幅度），且 95% 置信区间（蓝色阴影部分）相对收敛。这表明即便在传导最强烈的时期，国内调控政策（税收调节、风险准备金、乃至天花板价）依然强有力地控制了价格波动的极值。
+              </li>
+              <li>
+                <b>冲击衰减与吸收 (第 7 - 15 周及以后)：</b>
+                在度过峰值后，脉冲响应曲线开始平稳且单调地向零轴（基准线）收敛，并没有出现二次震荡或长期偏离。通常在第 12 周之后，冲击的影响已基本衰减殆尽，置信区间完全覆盖零轴。
+              </li>
+              <li>
+                <b>核心结论：</b>
+                VAR-IRF 模型的结果实证了中国能源市场具有极高的<b>“冲击吸收能力（Absorptive Capacity）”</b>。面对外部突发性能源危机，国内价格体系表现出“起步缓、峰值低、衰减快、无余震”的健康特征，是一道极为坚固的抗击打防火墙。
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- 中国成品油定价机制政策说明 -->
+      <div class="text-lg font-semibold mb-3 tech-font text-cyan-400 flex items-center gap-2 mt-2">
+        <span class="w-2 h-6 bg-neon-purple rounded-sm shadow-[0_0_8px_#D500F9]"></span>
+        中国成品油定价机制：“天花板价”与“地板价”政策
+      </div>
+      <div class="card relative overflow-hidden mb-8">
+        <div class="space-y-6 text-slate-300 text-sm leading-relaxed">
+          <p>
+            中国国内的汽柴油价格并非完全由市场决定，而是由国家发改委根据《石油价格管理办法》进行统一的<b>最高零售限价</b>调控。该机制以国际市场原油（布伦特、迪拜、米纳斯三地加权均价）为基础，每 <b>10 个工作日</b>评估调整一次。
+          </p>
+          <p>
+            为了兼顾消费者承受能力、实体经济运行成本以及国内炼油/开采企业的生存发展，国家在定价机制中设立了至关重要的<b>双向兜底红线（区间调控）</b>：
+          </p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+            <!-- 天花板价 -->
+            <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-5 relative overflow-hidden group hover:border-red-500/60 transition-colors flex flex-col h-full">
+              <div class="absolute top-0 right-0 w-16 h-16 bg-red-500/10 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-150"></div>
+              <div class="flex items-center gap-2 mb-3">
+                <span class="text-2xl">قف</span>
+                <h4 class="text-lg font-bold text-red-400 tech-font">130美元/桶 “天花板价”</h4>
+              </div>
+              <p class="mb-3 text-slate-400"><b>触发条件：</b>当国际油价高于 130 美元/桶时。</p>
+              <p class="text-slate-400"><b>政策动作：</b>国内成品油价格<b>原则上不上调或少上调</b>。这相当于彻底卡死了国内油价的上涨空间（92号汽油最高约在 10元/升 左右）。</p>
+              <p class="text-slate-400 mt-2"><b>核心目的：</b>保护民生与实体经济，防止极端国际高油价带来的输入性通胀和物流成本飙升。此时炼油企业的亏损将由中央财政给予阶段性补贴来兜底。</p>
+            </div>
+
+            <!-- 地板价 -->
+            <div class="bg-blue-900/20 border border-blue-500/30 rounded-lg p-5 relative overflow-hidden group hover:border-blue-500/60 transition-colors flex flex-col h-full">
+              <div class="absolute bottom-0 right-0 w-16 h-16 bg-blue-500/10 rounded-tl-full -mr-8 -mb-8 transition-transform group-hover:scale-150"></div>
+              <div class="flex items-center gap-2 mb-3">
+                <span class="text-2xl">⤓</span>
+                <h4 class="text-lg font-bold text-blue-400 tech-font">40美元/桶 “地板价”</h4>
+              </div>
+              <p class="mb-3 text-slate-400"><b>触发条件：</b>当国际油价低于 40 美元/桶时。</p>
+              <p class="text-slate-400"><b>政策动作：</b>国内成品油价格<b>不再下调</b>。未调金额将全部纳入国家设立的风险准备金。</p>
+              <p class="text-slate-400 mt-2"><b>核心目的：</b>保护国内石油开采企业的积极性。如果油价跌破开采成本，国内油田停产将严重威胁国家长期的能源供应安全。风险准备金则用于节能减排和应对新能源转型。</p>
+            </div>
+            
+            <!-- 50元/吨调价红线 -->
+            <div class="bg-green-900/20 border border-green-500/30 rounded-lg p-5 relative overflow-hidden group hover:border-green-500/60 transition-colors flex flex-col h-full md:col-span-2">
+              <div class="absolute top-0 right-0 w-16 h-16 bg-green-500/10 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-150"></div>
+              <div class="flex items-center gap-2 mb-3">
+                <span class="text-2xl">⚖️</span>
+                <h4 class="text-lg font-bold text-green-400 tech-font">50元/吨 “调价搁浅红线” 与 临时调控</h4>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p class="mb-3 text-slate-400"><b>触发条件：</b>当 10 个工作日内的调价金额每吨不足 50 元时。</p>
+                  <p class="text-slate-400"><b>政策动作：</b>国内油价<b>不作调整</b>，未调金额纳入下次调价时累加或冲抵。这避免了因国际油价微小波动导致国内频繁调价，增加了市场的稳定性。</p>
+                </div>
+                <div>
+                  <p class="mb-3 text-slate-400"><b>特殊干预：</b>《石油价格管理办法》第七条赋予了国家发改委在面临<b>重大突发事件</b>或<b>国际市场异常波动</b>时，实施“缩小调价幅度”或“暂停调价”的权力。</p>
+                  <p class="text-slate-400"><b>政策动作：</b>例如在2026年初面临中东地缘危机导致的油价飙升时，发改委通过临时管控，强制将原定的涨幅减半（俗称“压涨”），以避免短期恶性通胀。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-slate-800/50 border border-slate-700/50 rounded-lg p-4 mt-4 text-xs text-slate-400 flex items-start gap-3">
+            <span class="text-lg">💡</span>
+            <p>
+              <b>对 VAR-IRF 脉冲响应的现实意义：</b><br>
+              在观察上方的脉冲响应曲线时需要注意，由于中国存在上述“天花板”与“地板”的政策缓冲垫，国际油价的极端暴涨（或暴跌）在传导至国内时，其响应幅度会被强制“截断”或平滑化。这使得中国在面对全球能源危机时，展现出了极强的价格韧性与抗击打能力。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 中国历史燃料价格真实数据展示 -->
+      <div class="text-lg font-semibold mb-3 tech-font text-cyan-400 flex items-center gap-2 mt-2">
+        <span class="w-2 h-6 bg-neon-purple rounded-sm shadow-[0_0_8px_#D500F9]"></span>
+        中国燃料价格历史走势 (2020-2026)
+      </div>
+      <div class="card w-full mb-8">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold tech-font text-slate-200">布伦特原油 vs 中国汽/柴/液化石油气 零售价</h3>
+          <button onclick="loadChinaFuelData()" class="btn btn-secondary">加载/刷新</button>
+        </div>
+        <div id="chinaFuelChart" style="height: 500px; width: 100%;"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="../js/common.js"></script>
+  <script src="../js/irf.js"></script>
+</body>
+</html>

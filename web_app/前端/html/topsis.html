@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏆 极限压力 TOPSIS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="min-h-screen text-slate-200">
+  <div class="flex min-h-screen">
+    <aside class="w-64 flex flex-col h-full flex-shrink-0 z-10 border-r border-cyan-500/20 bg-slate-900/60 backdrop-blur-md">
+      <div class="p-6 border-b border-cyan-500/20">
+        <a href="../index.html" class="text-xl font-bold tech-font flex items-center gap-2 text-cyan-400 drop-shadow-[0_0_8px_rgba(0,229,255,0.8)]">
+          <span>🌍</span> 能源危机评估
+        </a>
+      </div>
+      <nav class="flex-1 p-4 overflow-y-auto">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 tech-font">分析模块</p>
+        <a class="nav-link" data-nav="eda" href="/html/eda.html">📊 数据工程与 EDA</a>
+        <a class="nav-link" data-nav="beta" href="/html/beta.html">📈 传导率 Beta 榜单</a>
+        <a class="nav-link" data-nav="irf" href="/html/irf.html">⚡ 动态抗击打 IRF</a>
+        <a class="nav-link" data-nav="topsis" href="/html/topsis.html">🏆 极限压力 TOPSIS</a>
+      </nav>
+      <div class="p-4 border-t border-cyan-500/20 text-xs text-slate-500 text-center tech-font">
+        基于 FastAPI + HTML/JS
+      </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8 relative">
+      <div id="loader" class="absolute inset-0 z-50 flex items-center justify-center hidden rounded-xl">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2"></div>
+      </div>
+
+      <h2 class="text-2xl font-bold mb-2 tech-font text-cyan-400">🏆 极限压力测试与综合评价</h2>
+      <p class="text-slate-400 mb-6">84 个国家/地区极限压力测试结果（固定榜单）与 AHP×熵权组合权重占比。</p>
+
+      <div class="card mb-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold tech-font text-slate-200">四项指标权重占比（AHP×熵权 组合权重）</h3>
+          <button onclick="loadTopsisWeights()" class="btn btn-secondary">刷新权重</button>
+        </div>
+        <div id="topsisWeightsChart" style="height: 360px; width: 100%;"></div>
+      </div>
+
+      <div class="card">
+        <div class="flex items-center gap-4 mb-4">
+          <label class="font-medium text-slate-300">切换评估指标：</label>
+          <select id="metricSelect" onchange="loadTopsisData()" class="w-64">
+            <option value="综合稳定性得分(C)">综合稳定性得分 (越高越好)</option>
+            <option value="韧性积分(Resilience)">韧性积分 (越高越好)</option>
+            <option value="价格暴涨率(MDD_%)">价格暴涨率 (越低越好)</option>
+            <option value="恢复时间(周_TTR)">恢复时间 (越低越好)</option>
+            <option value="基准预测_RMSE">基准预测_RMSE (越低越好)</option>
+            <option value="基准预测_R²">基准预测_R² (越高越好)</option>
+          </select>
+          <button onclick="loadTopsisData()" class="btn btn-secondary ml-auto">刷新榜单</button>
+        </div>
+        <div class="text-sm text-cyan-400 mb-4 px-3 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-md flex items-start gap-2">
+          <span class="mt-0.5">ℹ️</span>
+          <span id="metricDesc"></span>
+        </div>
+        <div id="topsisChart" style="height: 520px; width: 100%;"></div>
+      </div>
+
+      <!-- 8国同轴抗压测试走势图 -->
+      <div class="text-lg font-semibold mb-3 tech-font text-cyan-400 flex items-center gap-2 mt-8">
+        <span class="w-2 h-6 bg-neon-purple rounded-sm shadow-[0_0_8px_#D500F9]"></span>
+        全球典型国家极端能源危机抗压测试实证图
+      </div>
+      <div class="card w-full mb-8">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold tech-font text-slate-200">LSTM 模拟油价暴涨 40% 的抗压能力走势对比</h3>
+        </div>
+        <div class="bg-white/95 rounded-lg p-2 overflow-hidden flex justify-center">
+          <img src="../images/8国同轴抗压偏离度对比图.png" alt="8国同轴抗压测试对比图" class="w-full h-auto object-contain" style="max-height: 600px; mix-blend-mode: multiply;" />
+        </div>
+        <div class="mt-4 text-sm text-slate-400 leading-relaxed bg-slate-800/50 border border-slate-700/50 p-4 rounded-lg">
+          <p class="mb-2"><b>模型说明：</b> 基于 LSTM 神经网络，在历史数据末端人为注入连续 4 周国际油价暴涨 10%（复利超 40%）的“黑天鹅”压力冲击。</p>
+          <p class="mb-3"><b>什么是“黑天鹅”压力冲击：</b> 借用金融学术语，“黑天鹅”指极其罕见、难以预测且破坏力惊人的危机事件（例如2020年新冠疫情或2021年苏伊士运河堵塞）。本模型刻意构造了这种小概率的极端暴涨情境，以此来检验各国能源市场在面临不可预见的灾难时，其抗冲击防线的极限承压能力。</p>
+          
+          <div class="border-t border-slate-700/50 pt-3">
+            <p class="mb-2 text-slate-300 font-semibold">结果详细分析：</p>
+            <ul class="space-y-2 list-disc list-inside pl-4">
+              <li><b>冲击阶段（第1-4周）：</b> 图中粗黑实线代表中国。在第 3 周面临超过 40% 的累计极端涨幅冲击时，绝大多数国家（如虚线代表的欧美等国）国内价格迅速失控，偏离基准幅度飙升至 15%~25% 的高危区间。而中国国内汽油价格的偏离幅度仅约为 12%，涨幅被强制“腰斩”。这正是中国成品油定价机制中 <b>130美元/桶“天花板价”</b> 与 <b>50元/吨“调价搁浅红线”</b> 发挥了关键的物理阻断作用。</li>
+              <li><b>衰减恢复期（第5-10周）：</b> 随着外部冲击结束，大部分国家的国内油价在剧烈震荡中艰难回调。反观中国，由于在冲击期内价格“防洪堤”并未被击穿，其恢复曲线不仅平滑且迅速，仅在第 9 周左右就已几乎完全贴合基准水平。</li>
+              <li><b>综合评价：</b> 实证结果清晰地表明，在面对史诗级的“黑天鹅”暴涨危机时，中国的定价机制展现出了卓越的<b>“抗击打韧性”与“平滑恢复能力”</b>。它成功剥离了国际市场恐慌情绪向国内实体经济的传导，其抗风险能力显著优于同期缺乏严格价格保护机制的其他发达或发展中国家。</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="../js/common.js"></script>
+  <script src="../js/topsis.js"></script>
+</body>
+</html>

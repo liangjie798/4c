@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/eda", "destination": "/html/eda.html" },
+    { "source": "/beta", "destination": "/html/beta.html" },
+    { "source": "/irf", "destination": "/html/irf.html" },
+    { "source": "/topsis", "destination": "/html/topsis.html" }
+  ]
+}

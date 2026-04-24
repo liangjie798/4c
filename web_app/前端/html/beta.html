@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📈 传导率 Beta 榜单</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="min-h-screen text-slate-200">
+  <div class="flex min-h-screen">
+    <aside class="w-64 flex flex-col h-full flex-shrink-0 z-10 border-r border-cyan-500/20 bg-slate-900/60 backdrop-blur-md">
+      <div class="p-6 border-b border-cyan-500/20">
+        <a href="../index.html" class="text-xl font-bold tech-font flex items-center gap-2 text-cyan-400 drop-shadow-[0_0_8px_rgba(0,229,255,0.8)]">
+          <span>🌍</span> 能源危机评估
+        </a>
+      </div>
+      <nav class="flex-1 p-4 overflow-y-auto">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 tech-font">分析模块</p>
+        <a class="nav-link" data-nav="eda" href="/html/eda.html">📊 数据工程与 EDA</a>
+        <a class="nav-link" data-nav="beta" href="/html/beta.html">📈 传导率 Beta 榜单</a>
+        <a class="nav-link" data-nav="irf" href="/html/irf.html">⚡ 动态抗击打 IRF</a>
+        <a class="nav-link" data-nav="topsis" href="/html/topsis.html">🏆 极限压力 TOPSIS</a>
+      </nav>
+      <div class="p-4 border-t border-cyan-500/20 text-xs text-slate-500 text-center tech-font">
+        基于 FastAPI + HTML/JS
+      </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8 relative">
+      <div id="loader" class="absolute inset-0 z-50 flex items-center justify-center hidden rounded-xl">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2"></div>
+      </div>
+
+      <h2 class="text-2xl font-bold mb-2 tech-font text-cyan-400">📈 传导率 Beta 榜单</h2>
+      <p class="text-slate-400 mb-6">展示 84 个国家/地区针对国际布伦特原油价格的 Beta 传导系数。</p>
+
+      <div class="card">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold tech-font text-slate-200">全球抗冲击能力国家排行（84国）</h3>
+          <button onclick="loadBetaData()" class="btn btn-secondary">刷新数据</button>
+        </div>
+        <div id="betaChart" style="height: 520px; width: 100%;"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/common.js"></script>
+  <script src="../js/beta.js"></script>
+</body>
+</html>
